@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Recuperar Contraseña - Gracia y Devoción</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    
+    body {
+      font-family: 'Libre Baskerville', Georgia, serif;
+      background: linear-gradient(135deg, #DC143C 0%, #A00000 50%, #8B0000 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    
+    .container {
+      background: white;
+      padding: 50px 40px;
+      border-radius: 24px;
+      box-shadow: 0 25px 80px rgba(0,0,0,0.4);
+      max-width: 450px;
+      width: 100%;
+      text-align: center;
+    }
+    
+    .logo {
+      width: 80px;
+      height: 100px;
+      background: #DC143C;
+      border-radius: 12px;
+      margin: 0 auto 25px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border: 3px solid rgba(255,255,255,0.4);
+      box-shadow: 0 10px 30px rgba(220, 20, 60, 0.3);
+    }
+    
+    .logo-text {
+      color: white;
+      font-weight: bold;
+      font-size: 14px;
+      text-align: center;
+      line-height: 1.2;
+    }
+    
+    h1 {
+      color: #DC143C;
+      font-size: 28px;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+    
+    .subtitle {
+      color: #718096;
+      font-size: 15px;
+      margin-bottom: 30px;
+      line-height: 1.5;
+    }
+    
+    .loading {
+      margin: 30px 0;
+    }
+    
+    .spinner {
+      width: 50px;
+      height: 50px;
+      border: 5px solid #F7FAFC;
+      border-top: 5px solid #DC143C;
+      border-radius: 50%;
+      margin: 0 auto 20px;
+      animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    
+    .loading-text {
+      color: #2D3748;
+      font-size: 16px;
+      font-weight: 500;
+    }
+    
+    .success {
+      display: none;
+      color: #48BB78;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 20px 0;
+      padding: 15px;
+      background: #F0FFF4;
+      border-radius: 12px;
+      border: 2px solid #48BB78;
+    }
+    
+    .error {
+      display: none;
+      color: #DC143C;
+      font-size: 14px;
+      margin: 20px 0;
+      padding: 15px;
+      background: #FFF5F5;
+      border-radius: 12px;
+      border: 2px solid #FC8181;
+    }
+    
+    .btn {
+      background: linear-gradient(135deg, #DC143C 0%, #A00000 100%);
+      color: white;
+      padding: 15px 35px;
+      border: none;
+      border-radius: 16px;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-top: 20px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 15px rgba(220, 20, 60, 0.3);
+    }
+    
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(220, 20, 60, 0.4);
+    }
+    
+    .btn:active {
+      transform: translateY(0);
+    }
+    
+    .info-box {
+      background: #F7FAFC;
+      padding: 20px;
+      border-radius: 12px;
+      margin-top: 25px;
+      border-left: 4px solid #DC143C;
+    }
+    
+    .info-box p {
+      color: #4A5568;
+      font-size: 14px;
+      line-height: 1.6;
+      margin: 5px 0;
+    }
+    
+    .info-box strong {
+      color: #2D3748;
+    }
+    
+    @media (max-width: 480px) {
+      .container {
+        padding: 40px 25px;
+      }
+      
+      h1 {
+        font-size: 24px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">
+      <div class="logo-text">
+        GRACIA<br>DEVOCIÓN
+      </div>
+    </div>
+    
+    <h1>🔐 Recuperar Contraseña</h1>
+    <p class="subtitle">Estamos redirigiéndote a la aplicación para que puedas establecer tu nueva contraseña</p>
+    
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <p class="loading-text">Abriendo la app...</p>
+    </div>
+    
+    <div class="success" id="success">
+      ✅ ¡La app debería abrirse en breve!
+    </div>
+    
+    <div class="error" id="error">
+      ⚠️ Si la app no se abre automáticamente, toca el botón de abajo
+    </div>
+    
+    <a href="#" id="fallbackBtn" class="btn" style="display: none;">
+      Abrir app manualmente
+    </a>
+    
+    <div class="info-box">
+      <p><strong>¿Qué está pasando?</strong></p>
+      <p>Te estamos redirigiendo a la app "Gracia y Devoción" para completar la recuperación de tu contraseña de forma segura.</p>
+    </div>
+  </div>
+
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const token = urlParams.get('token');
+    const type = urlParams.get('type');
+    const error = urlParams.get('error');
+    const errorCode = urlParams.get('error_code');
+    
+    const loadingEl = document.getElementById('loading');
+    const successEl = document.getElementById('success');
+    const errorEl = document.getElementById('error');
+    const fallbackBtn = document.getElementById('fallbackBtn');
+    
+    if (error) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      
+      if (errorCode === 'otp_expired') {
+        errorEl.innerHTML = '<strong>⚠️ Enlace expirado o ya usado</strong><br><br>Los enlaces de recuperación solo funcionan una vez y expiran en 24 horas.<br><br><strong>Solución:</strong> Vuelve a la app y solicita un nuevo enlace.';
+      } else {
+        errorEl.innerHTML = '<strong>❌ Error</strong><br><br>Por favor, solicita un nuevo enlace de recuperación.';
+      }
+      
+      fallbackBtn.style.display = 'none';
+      return;
+    }
+    
+    if (!token || !type) {
+      loadingEl.style.display = 'none';
+      errorEl.style.display = 'block';
+      errorEl.innerHTML = '❌ Enlace inválido. Por favor, solicita un nuevo enlace de recuperación.';
+      fallbackBtn.style.display = 'none';
+      return;
+    }
+    
+    const deepLink = `bibliahimnario://auth-callback?type=${encodeURIComponent(type)}&token=${encodeURIComponent(token)}`;
+    
+    console.log('Redirigiendo a:', deepLink);
+    fallbackBtn.href = deepLink;
+    
+    setTimeout(() => {
+      window.location.href = deepLink;
+    }, 500);
+    
+    setTimeout(() => {
+      loadingEl.style.display = 'none';
+      successEl.style.display = 'block';
+      errorEl.style.display = 'block';
+      errorEl.innerHTML = '⚠️ Si la app no se abrió, toca el botón de abajo';
+      fallbackBtn.style.display = 'inline-block';
+    }, 2500);
+    
+    window.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        loadingEl.style.display = 'none';
+        successEl.style.display = 'block';
+        errorEl.style.display = 'none';
+        fallbackBtn.style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
