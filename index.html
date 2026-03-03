@@ -203,18 +203,36 @@
     </div>
   </div>
 
-  <script>
-    const urlParams = new URLSearchParams(window.location.search);
-    const token = urlParams.get('token');
-    const type = urlParams.get('type');
-    const error = urlParams.get('error');
-    const errorCode = urlParams.get('error_code');
+<script>
+  // Esperar a que la página cargue completamente
+  window.addEventListener('load', function() {
+    console.log('🔗 Página cargada, URL:', window.location.href);
+    
+    // 🔴 IMPORTANTE: Supabase envía los datos en el HASH (#), no en query params (?)
+    const hash = window.location.hash.substring(1); // Remover el '#' inicial
+    const params = new URLSearchParams(hash);
+    
+    // Extraer parámetros CORRECTOS que envía Supabase
+    const accessToken = params.get('access_token');
+    const refreshToken = params.get('refresh_token');
+    const type = params.get('type');
+    const expiresIn = params.get('expires_in');
+    const error = params.get('error');
+    const errorCode = params.get('error_code');
+    
+    console.log('📦 Parámetros recibidos:', {
+      hasAccessToken: !!accessToken,
+      type: type,
+      error: error,
+      errorCode: errorCode
+    });
     
     const loadingEl = document.getElementById('loading');
     const successEl = document.getElementById('success');
     const errorEl = document.getElementById('error');
     const fallbackBtn = document.getElementById('fallbackBtn');
     
+    // 🔴 Verificar si hay error
     if (error) {
       loadingEl.style.display = 'none';
       errorEl.style.display = 'block';
@@ -222,30 +240,36 @@
       if (errorCode === 'otp_expired') {
         errorEl.innerHTML = '<strong>⚠️ Enlace expirado o ya usado</strong><br><br>Los enlaces de recuperación solo funcionan una vez y expiran en 24 horas.<br><br><strong>Solución:</strong> Vuelve a la app y solicita un nuevo enlace.';
       } else {
-        errorEl.innerHTML = '<strong>❌ Error</strong><br><br>Por favor, solicita un nuevo enlace de recuperación.';
+        errorEl.innerHTML = '<strong>❌ Error:</strong> ' + error + '<br><br>Por favor, solicita un nuevo enlace de recuperación.';
       }
       
       fallbackBtn.style.display = 'none';
       return;
     }
     
-    if (!token || !type) {
+    // 🔴 Verificar que tengamos el access_token y el type correctos
+    if (!accessToken || !type) {
       loadingEl.style.display = 'none';
       errorEl.style.display = 'block';
-      errorEl.innerHTML = '❌ Enlace inválido. Por favor, solicita un nuevo enlace de recuperación.';
+      errorEl.innerHTML = '❌ Enlace inválido.<br><br>No se encontraron los parámetros necesarios.<br><br><strong>access_token:</strong> ' + (accessToken ? '✅' : '❌') + '<br><strong>type:</strong> ' + (type ? type : '❌');
       fallbackBtn.style.display = 'none';
       return;
     }
     
-    const deepLink = `bibliahimnario://auth-callback?type=${encodeURIComponent(type)}&token=${encodeURIComponent(token)}`;
+    // ✅ Construir el deep link con los parámetros correctos
+    const deepLink = `bibliahimnario://auth-callback?type=${encodeURIComponent(type)}&token=${encodeURIComponent(accessToken)}&expires_in=${encodeURIComponent(expiresIn || '')}`;
     
-    console.log('Redirigiendo a:', deepLink);
+    console.log('🚀 Redirigiendo a:', deepLink);
+    
+    // Guardar en el botón de fallback por si la redirección automática falla
     fallbackBtn.href = deepLink;
     
+    // 🔁 Redirigir a la app después de un breve delay (para que el usuario vea el spinner)
     setTimeout(() => {
       window.location.href = deepLink;
     }, 500);
     
+    // ⏱️ Si después de 2.5 segundos la app no se abrió, mostrar mensaje de ayuda
     setTimeout(() => {
       loadingEl.style.display = 'none';
       successEl.style.display = 'block';
@@ -253,15 +277,22 @@
       errorEl.innerHTML = '⚠️ Si la app no se abrió, toca el botón de abajo';
       fallbackBtn.style.display = 'inline-block';
     }, 2500);
-    
-    window.addEventListener('visibilitychange', () => {
-      if (!document.hidden) {
-        loadingEl.style.display = 'none';
-        successEl.style.display = 'block';
-        errorEl.style.display = 'none';
-        fallbackBtn.style.display = 'none';
-      }
-    });
-  </script>
+  });
+
+  // 🔄 Detectar cuando el usuario regresa a la página (significa que la app ya se abrió)
+  window.addEventListener('visibilitychange', () => {
+    if (!document.hidden) {
+      const loadingEl = document.getElementById('loading');
+      const successEl = document.getElementById('success');
+      const errorEl = document.getElementById('error');
+      const fallbackBtn = document.getElementById('fallbackBtn');
+      
+      loadingEl.style.display = 'none';
+      successEl.style.display = 'block';
+      errorEl.style.display = 'none';
+      fallbackBtn.style.display = 'none';
+    }
+  });
+</script>
 </body>
 </html>
